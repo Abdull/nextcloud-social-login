@@ -36,23 +36,16 @@ class CustomOAuth2 extends OAuth2
         $profileUrl = $this->config->get('endpoints')['profile_url'];
 
         if (count($profileFields) > 0) {
-            $profileUrl .= (strpos($profileUrl, '?') !== false ? '&' : '?') . 'fields=' . implode(',', $profileFields);
+            // profile fields: id,displayName,onPremisesImmutableId,mail
+            // scopes: openid email profile User.Read profile offline_access
+            $profileUrl .= (strpos($profileUrl, '?') !== false ? '&' : '?') . '$select=' . implode(',', $profileFields);
         }
 
         $response = $this->apiRequest($profileUrl);
         if (isset($response->ocs->data)) {
             $response = $response->ocs->data;
         }
-        if (!isset($response->identifier)) {
-            $response->identifier = $response->id
-                ?? $response->ID
-                ?? $response->data->id
-                ?? $response->user_id
-                ?? $response->userId
-                ?? $response->oauth_user_id
-                ?? null
-            ;
-        }
+
         $displayNameClaim = $this->config->get('displayname_claim');
         $response->displayName = $response->$displayNameClaim
             ?? $response->displayName
@@ -80,7 +73,25 @@ class CustomOAuth2 extends OAuth2
             $userProfile->data['group_mapping'] = $groupMapping;
         }
 
+        $userProfile->email = $data->get('mail');
+        $onPremisesImmutableId = $data->get('onPremisesImmutableId');
+        // in Azure AD, the onPremisesImmutableId is a base64 encoding of ObjectGUID
+        $userProfile->identifier = CustomOAuth2::getDeserializedObjectGuid($onPremisesImmutableId);
         return $userProfile;
+    }
+
+    public static function getDeserializedObjectGuid($base64)
+    {
+        $binary = base64_decode($base64);
+        $lowerHex = bin2hex($binary);
+        $hex = strtoupper($lowerHex);
+
+        $guid = substr($hex, 6, 2) . substr($hex, 4, 2) . substr($hex, 2, 2) . substr($hex, 0, 2) . "-"
+            . substr($hex, 10, 2) . substr($hex, 8, 2) . "-"
+            . substr($hex, 14, 2) . substr($hex, 12, 2) . "-"
+            . substr($hex, 16, 2) . substr($hex, 18, 2) . "-"
+            . substr($hex, 20);
+        return $guid;
     }
 
     protected function getGroups(Data\Collection $data)
