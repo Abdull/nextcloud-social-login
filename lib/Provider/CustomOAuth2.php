@@ -55,10 +55,6 @@ class CustomOAuth2 extends OAuth2
 
         $data = new Data\Collection($response);
 
-        if (!$data->exists('identifier')) {
-            throw new UnexpectedApiResponseException('Provider API returned an unexpected response.');
-        }
-
         $userProfile = new User\Profile();
         foreach ($data->toArray() as $key => $value) {
             if ($key !== 'data' && property_exists($userProfile, $key)) {

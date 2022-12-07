@@ -6,6 +6,45 @@ For OAuth you must create app for certain providers. Login button appear at logi
 
 ## Installation
 
+```
+# edit $NEXTCLOUD_DIR/config/config.php to have the following entry:
+##########
+$CONFIG = array (
+  // ...
+  
+  'apps_paths' =>
+  array (
+    0 => 
+    array (
+      'path' => OC::$SERVERROOT . '/apps',
+      'url' => '/apps',
+      'writable' => false,
+    ),
+    1 => 
+    array (
+      'path' => OC::$SERVERROOT . '/apps-extra',
+      'url' => '/apps-extra',
+      'writable' => true,
+    ),
+  ),
+  
+  // ...
+);
+##########
+
+mkdir -p "${NEXTCLOUD_DIR}/apps-extra"
+
+git clone https://github.com/Abdull/nextcloud-social-login.git "${NEXTCLOUD_DIR}/apps-extra/sociallogin"
+
+# or
+# git clone git@github.com:Abdull/nextcloud-social-login.git "${NEXTCLOUD_DIR}/apps-extra/sociallogin"
+
+Then log in as admin.
+
+Select "Apps", search for "Social Login Azure Active Directory",
+then activate this app.
+```
+
 Login to your NextCloud installation as an administrator and under "Apps" click "Download and enable" next to the "Social Login" app.
 
 See below for setup and configuration instructions.
